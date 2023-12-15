@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Buttons</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Control Buttons</h1>
+    <button onclick="goForward()">&#x203A; Forward</button>
+    <button onclick="stop()">&#9632; Stop</button>
+    <button onclick="goBack()">&#x2039; Backward</button>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
+

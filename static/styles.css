@@ -1,0 +1,79 @@
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+h1 {
+    text-align: center;
+    font-family: 'Georgia', serif;
+    color: #343434;
+}
+
+button {
+    width: 250px;
+    font-size: 24px;
+    padding: 10px;
+    margin: 5px;
+    border: 2px solid transparent;
+    background-color: transparent;
+    transition: background-color 0.3s ease;
+    font-family: 'DM Sans', sans-serif;
+    color: #343434;
+}
+
+button:hover {
+    background-color: #f0f3f6;
+}
+
+button:active {
+    background-color: #d7d9dc;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 20px;
+    width: 300px;
+    height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.popup-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+}
+
+.popup-button {
+    align-self: center;
+    font-size: small;
+    padding: 10px;
+    margin: 5px;
+    border: none;
+    background-color: transparent;
+    transition: background-color 0.3s ease;
+    font-family: 'DM Sans', sans-serif;
+    color: #343434;
+}
+
+.popup-button:hover {
+    background-color: #4CAF50;
+    color: #fff;
+}
