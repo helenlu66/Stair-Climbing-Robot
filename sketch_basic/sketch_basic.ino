@@ -1,19 +1,6 @@
 #include <VL53L0X.h>
 #include <Wire.h>
 #include <JY901.h>
-#include <WiFi.h>
-#include <WebServer.h>
-#include <ArduinoJson.h>
-#include <string>
-
-// set up server
-
-const char *SSID = "Tufts_Robot";
-const char *PWD = "";
-
-WebServer server(80);
-StaticJsonDocument<250> jsonDocument;
-char buffer[250];
 
 // Sensor setup
 VL53L0X lidar;
@@ -34,7 +21,6 @@ struct AngleData {
 };
 
 float angle_safety_threshold = 70.0;
-float angle_flat_floor_threshold = 25;
 
 float old_anlge = 0.0;
 float old_angular_vel = 0.0;
@@ -72,24 +58,6 @@ void setup() {
 
   Serial.begin(115200);
 
-  // connect to WIFI
-  Serial.println("Connecting to Wi-Fi");
-  WiFi.begin(SSID, PWD);
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
-    delay(500);
-  }
- 
-  Serial.print("Connected! IP Address: ");
-  Serial.println(WiFi.localIP());   
-  setup_routing();
-
-}
-
-void setup_routing() {          
-  server.on("/", HTTP_POST, handlePost);    
-          
-  server.begin();    
 }
 
 // read angles from WT901
@@ -160,51 +128,29 @@ void drive_front_motor_backward(int speed){
   delay(500);
 }
 
-void handlePost(){
-  if (server.hasArg("plain") == false) {
-  }
-  String body = server.arg("plain");
-  deserializeJson(jsonDocument, body);
-  String command = jsonDocument["command"];
-  Serial.println(command);
-
-  
-}
-
-void actBasedOnState(String command) {
+void loop() {
   int distance = lidar.readRangeContinuousMillimeters();
   Serial.print("lidar reading: ");
   Serial.println(distance);
+
   read_wt901();
   AngleData angleData = readAngles1k();
 
-  // move forward fast if obstacle is far
-  if (command == "forward") {
-    if (distance >= distance_threshold & angleData.angle_x <= angle_flat_floor_threshold) {
-      drive_front_motor_forward(1000);
-    } else if (distance < distance_threshold || angleData.angle_x > angle_flat_floor_threshold) { // move slow when approaching stairs or already on stairs
-      drive_front_motor_forward(150);
-    }
-      read_wt901();
-      AngleData angleData = readAngles1k();
-
-      // check if current angle is in the danger zone
-    if (angleData.angle_x >= angle_safety_threshold){ // in the danger zone, back out of the position
-      drive_front_motor_backward(1000);
-      
-    } 
-    
-
-  } else if (command == 'stop') {
-    stop_front_motor();
-  } else if (command == 'backward') {
+  // check if current angle is in the danger zone
+  if (angleData.angle_x >= angle_safety_threshold){ // in the danger zone, back out of the position
     drive_front_motor_backward(1000);
   } else {
-    Serial.println("unrecognized command!");
+  
+    // move forward fast if obstacle is far
+    if (distance >= distance_threshold) {
+      drive_front_motor_forward(1000);
+
+    } else { // move slow when approaching stairs
+      drive_front_motor_forward(150);
+    }
+  
   }
   
-}
 
-void loop() {
-  server.handleClient();
+  
 }

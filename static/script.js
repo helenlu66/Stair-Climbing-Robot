@@ -38,8 +38,6 @@ function goBack() {
 }
 
 function checkHumanDetected() {
-    msg = "Human detected :("
-    showPopup(msg);
 
     fetch(esp32_cam_ip, { method: 'GET' })
         .then(response => {
