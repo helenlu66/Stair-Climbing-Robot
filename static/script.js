@@ -1,50 +1,86 @@
-esp32_cam_ip = "";
-esp32_ip = ""
+esp32_endpoint = "esp32";
+esp32_cam_endpoint = "esp32_cam"
 
 
 function goForward() {
     console.log("Forward button clicked");
     humanDetected = checkHumanDetected();
+    console.log("human", humanDetected)
     if (!humanDetected) {
-        // Create JSON data with the "command" field
-        const jsonData = { command: "forward" };
-
-        // Send a POST request to a specified endpoint (replace with your desired endpoint)
-        fetch(esp32_ip, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(jsonData),
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
+        sendCommand('forward')
+        .then(responseData => {
+            console.log('Received response data:', responseData);
+            // display a popup if the robot is going backward instead of forward due to IMU angle being too large
+            if (responseData['executed action'] === 'backward'){
+                showPopup("Angle larger than safety threshold.")
             }
-            return response.json();
         })
         .catch(error => {
-            console.error('There was a problem with the forward operation:', error);
+            console.error('Error:', error);
+        });
+    } else {
+        sendCommand('stop')
+        .then(responseData => {
+            console.log('Received response data:', responseData);
+        })
+        .catch(error => {
+            console.error('Error:', error);
         });
     }
 }
 
 function stop() {
     console.log("Stop button clicked");
+    sendCommand('stop')
+    .then(responseData => {
+        console.log('Received response data:', responseData);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
 }
 
 function goBack() {
     console.log("Backward button clicked");
+    sendCommand('backward')
+    .then(responseData => {
+        console.log('Received response data:', responseData);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function sendCommand(command) {
+    // Create JSON data with the "command" field
+    const jsonData = { command: command };
+
+    // Send a POST request to a specified endpoint (replace with your desired endpoint)
+    return fetch(esp32_endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(jsonData),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .catch(error => {
+        console.error('There was a problem with the operation:', error);
+    });
 }
 
 function checkHumanDetected() {
-
-    fetch(esp32_cam_ip, { method: 'GET' })
+    
+    return fetch(esp32_cam_endpoint, { method: 'GET' })
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
-            //return response.json();
         })
         .then(data => {
             console.log(data);

@@ -8,8 +8,8 @@
 
 // set up server
 
-const char *SSID = "Tufts_Robot";
-const char *PWD = "";
+const char *SSID = "AlienPrincessEarthBase";
+const char *PWD = "Qing@1994";
 
 WebServer server(80);
 StaticJsonDocument<250> jsonDocument;
@@ -152,7 +152,7 @@ void drive_front_motor_forward(int speed){
 
 void drive_front_motor_backward(int speed){
   // Move the DC motor backward at speed for 2 seconds
-  Serial.print("Moving bcakward front motor at speed ");
+  Serial.print("Moving backward front motor at speed ");
   Serial.println(speed);
   ledcWrite(pwmChannel, speed);
   digitalWrite(frontMotorPin1, HIGH);
@@ -167,38 +167,52 @@ void handlePost(){
   deserializeJson(jsonDocument, body);
   String command = jsonDocument["command"];
   Serial.println(command);
+  String action = actBasedOnState(command);
 
-  
+  // Create a JSON document for the response to the client
+  DynamicJsonDocument responseDoc(200);
+  responseDoc["executed action"] = action;
+  // Convert the JSON document to a string
+  serializeJson(responseDoc, buffer);
+
+  // Send the JSON response back to the client
+  server.send(200, "application/json", buffer);
 }
 
-void actBasedOnState(String command) {
+String actBasedOnState(String command) {
+  // read sensor data to determine state
   int distance = lidar.readRangeContinuousMillimeters();
   Serial.print("lidar reading: ");
   Serial.println(distance);
   read_wt901();
   AngleData angleData = readAngles1k();
 
-  // move forward fast if obstacle is far
+  // process the command
   if (command == "forward") {
-    if (distance >= distance_threshold & angleData.angle_x <= angle_flat_floor_threshold) {
+    if (distance >= distance_threshold & angleData.angle_x <= angle_flat_floor_threshold) { // move fast when far from the stairs
       drive_front_motor_forward(1000);
-    } else if (distance < distance_threshold || angleData.angle_x > angle_flat_floor_threshold) { // move slow when approaching stairs or already on stairs
+      return "fast forward";
+    } else if (distance < distance_threshold || (angleData.angle_x > angle_flat_floor_threshold & angleData.angle_x <= angle_safety_threshold)) { // move slow when approaching stairs or already on stairs
       drive_front_motor_forward(150);
-    }
+
       read_wt901();
       AngleData angleData = readAngles1k();
 
-      // check if current angle is in the danger zone
-    if (angleData.angle_x >= angle_safety_threshold){ // in the danger zone, back out of the position
-      drive_front_motor_backward(1000);
-      
-    } 
-    
+      // check if current angle is in the danger zone after moving forward
+      if (angleData.angle_x > angle_safety_threshold){ // in the danger zone, back out of the position
+        drive_front_motor_backward(1000);
+        return "backward";
+      } 
 
-  } else if (command == 'stop') {
+      return "slow forward";
+    }
+
+  } else if (command == "stop") {
     stop_front_motor();
-  } else if (command == 'backward') {
+    return "stop";
+  } else if (command == "backward") {
     drive_front_motor_backward(1000);
+    return "backward";
   } else {
     Serial.println("unrecognized command!");
   }
