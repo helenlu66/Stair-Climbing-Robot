@@ -8,8 +8,8 @@
 
 // set up server
 
-const char *SSID = "AlienPrincessEarthBase";
-const char *PWD = "Qing@1994";
+const char *SSID = "Tufts_Robot";
+const char *PWD = "";
 
 WebServer server(80);
 StaticJsonDocument<250> jsonDocument;
@@ -43,7 +43,12 @@ float alpha = 0.9; // alpha for low-pass filter
 // Front Motor 
 int frontMotorPin1 = 27; 
 int frontMotorPin2 = 26; 
-int enable1Pin = 14; 
+int enable1Pin = 14;
+
+// Back Motor
+int backMotorPin1 = 32; 
+int backMotorPin2 = 33; 
+int backEnable1Pin = 25;
 
 // Setting PWM properties
 const int freq = 1000;
@@ -63,12 +68,16 @@ void setup() {
   pinMode(frontMotorPin1, OUTPUT);
   pinMode(frontMotorPin2, OUTPUT);
   pinMode(enable1Pin, OUTPUT);
+  pinMode(backMotorPin1, OUTPUT);
+  pinMode(backMotorPin2, OUTPUT);
+  pinMode(backEnable1Pin, OUTPUT);
   
   // configure LED PWM functionalitites
   ledcSetup(pwmChannel, freq, resolution);
   
   // attach the channel to the GPIO to be controlled
   ledcAttachPin(enable1Pin, pwmChannel);
+  ledcAttachPin(backEnable1Pin, pwmChannel);
 
   Serial.begin(115200);
 
@@ -138,6 +147,8 @@ void stop_front_motor() {
   Serial.println("Stopping the front motors");
   digitalWrite(frontMotorPin1, LOW);
   digitalWrite(frontMotorPin2, LOW);
+  digitalWrite(backMotorPin1, LOW);
+  digitalWrite(backMotorPin2, LOW);
 }
 
 void drive_front_motor_forward(int speed){
@@ -146,7 +157,9 @@ void drive_front_motor_forward(int speed){
   Serial.println(speed);
   ledcWrite(pwmChannel, speed);
   digitalWrite(frontMotorPin1, LOW);
-  digitalWrite(frontMotorPin2, HIGH); 
+  digitalWrite(frontMotorPin2, HIGH);
+  digitalWrite(backMotorPin1, LOW);
+  digitalWrite(backMotorPin2, HIGH); 
   delay(500);
 }
 
@@ -156,7 +169,9 @@ void drive_front_motor_backward(int speed){
   Serial.println(speed);
   ledcWrite(pwmChannel, speed);
   digitalWrite(frontMotorPin1, HIGH);
-  digitalWrite(frontMotorPin2, LOW); 
+  digitalWrite(frontMotorPin2, LOW);
+  digitalWrite(backMotorPin1, HIGH);
+  digitalWrite(backMotorPin2, LOW);
   delay(500);
 }
 
@@ -180,31 +195,29 @@ void handlePost(){
 }
 
 String actBasedOnState(String command) {
-  // read sensor data to determine state
-  int distance = lidar.readRangeContinuousMillimeters();
-  Serial.print("lidar reading: ");
-  Serial.println(distance);
-  read_wt901();
-  AngleData angleData = readAngles1k();
 
   // process the command
   if (command == "forward") {
+      // read sensor data to determine state
+    int distance = lidar.readRangeContinuousMillimeters();
+    Serial.print("lidar reading: ");
+    Serial.println(distance);
+    read_wt901();
+    AngleData angleData = readAngles1k();
+
     if (distance >= distance_threshold & angleData.angle_x <= angle_flat_floor_threshold) { // move fast when far from the stairs
       drive_front_motor_forward(1000);
       return "fast forward";
-    } else if (distance < distance_threshold || (angleData.angle_x > angle_flat_floor_threshold & angleData.angle_x <= angle_safety_threshold)) { // move slow when approaching stairs or already on stairs
+    } else if (distance < distance_threshold & angleData.angle_x <= angle_flat_floor_threshold) { // move slow when approaching stairs
       drive_front_motor_forward(150);
-
-      read_wt901();
-      AngleData angleData = readAngles1k();
-
-      // check if current angle is in the danger zone after moving forward
-      if (angleData.angle_x > angle_safety_threshold){ // in the danger zone, back out of the position
-        drive_front_motor_backward(1000);
-        return "backward";
-      } 
-
       return "slow forward";
+    } else if (angleData.angle_x > angle_flat_floor_threshold & angleData.angle_x <= angle_safety_threshold) { // move fast when on the stairs
+      drive_front_motor_forward(1000);
+      return "fast forward";
+    } else if (angleData.angle_x > angle_safety_threshold) {
+      // check if current angle is in the danger zone after moving forward
+      drive_front_motor_backward(1000);
+      return "backward";
     }
 
   } else if (command == "stop") {

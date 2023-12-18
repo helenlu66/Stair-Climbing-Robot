@@ -4,29 +4,48 @@ esp32_cam_endpoint = "esp32_cam"
 
 function goForward() {
     console.log("Forward button clicked");
-    humanDetected = checkHumanDetected();
-    console.log("human", humanDetected)
-    if (!humanDetected) {
-        sendCommand('forward')
-        .then(responseData => {
-            console.log('Received response data:', responseData);
-            // display a popup if the robot is going backward instead of forward due to IMU angle being too large
-            if (responseData['executed action'] === 'backward'){
-                showPopup("Angle larger than safety threshold.")
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    } else {
-        sendCommand('stop')
-        .then(responseData => {
-            console.log('Received response data:', responseData);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    }
+    sendCommand('forward')
+    .then(responseData => {
+        console.log('Received response data:', responseData);
+        // display a popup if the robot is going backward instead of forward due to IMU angle being too large
+        if (responseData['executed action'] === 'backward'){
+            showPopup("Angle larger than safety threshold.")
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+    // checkHumanDetected()
+    // .then(responseData => {
+    //     console.log('Received human detection:', responseData);
+    //     return response.text()
+    // })
+    // .then(humanDetected => {
+    //     if (humanDetected === "true") { // human detected, stop
+    //         sendCommand('stop')
+    //         .then(responseData => {
+    //             console.log('Received response data:', responseData);
+    //         })
+    //         .catch(error => {
+    //             console.error('Error:', error);
+    //         });
+    //     } else {
+    //         sendCommand('forward')
+    //         .then(responseData => {
+    //             console.log('Received response data:', responseData);
+    //             // display a popup if the robot is going backward instead of forward due to IMU angle being too large
+    //             if (responseData['executed action'] === 'backward'){
+    //                 showPopup("Angle larger than safety threshold.")
+    //             }
+    //         })
+    //         .catch(error => {
+    //             console.error('Error:', error);
+    //         });
+    //     }
+    // })
+    // .catch(error => {
+    //     console.error('Error:', error);
+    // });
 }
 
 function stop() {
@@ -72,6 +91,52 @@ function sendCommand(command) {
     .catch(error => {
         console.error('There was a problem with the operation:', error);
     });
+}
+
+function takePic() {
+    return fetch(esp32_cam_endpoint, { method: 'GET' })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.blob();
+        })
+        .then(imageBlob => {
+            const imageUrl = URL.createObjectURL(imageBlob);
+            showImagePopup(imageUrl);
+        })
+        .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+        });
+}
+
+function showImagePopup(imageUrl) {
+    const popup = document.createElement('div');
+    popup.className = 'popup';
+
+    const closeButton = document.createElement('span');
+    closeButton.className = 'popup-close';
+    closeButton.innerHTML = '&times;';
+    closeButton.addEventListener('click', () => {
+        document.body.removeChild(popup);
+    });
+    popup.appendChild(closeButton);
+
+    const imageElement = document.createElement('img');
+    imageElement.src = imageUrl;
+    popup.appendChild(imageElement);
+
+    const okButton = document.createElement('button');
+    okButton.className = 'popup-button';
+    okButton.textContent = 'OK';
+    okButton.addEventListener('click', () => {
+        document.body.removeChild(popup);
+    });
+    popup.appendChild(okButton);
+
+    document.body.appendChild(popup);
+
+    popup.style.display = 'block';
 }
 
 function checkHumanDetected() {
