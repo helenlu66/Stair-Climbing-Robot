@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, jsonify, Response
 from flask_cors import CORS  # Import CORS
 
 esp32_url = "http://10.247.137.97"
-esp32_cam_url = "http://10.0.0.220/picture"
+esp32_cam_url = "http://10.247.137.87/picture"
 
 app = Flask(__name__)
 
