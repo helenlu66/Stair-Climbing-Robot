@@ -15,37 +15,6 @@ function goForward() {
     .catch(error => {
         console.error('Error:', error);
     });
-    // checkHumanDetected()
-    // .then(responseData => {
-    //     console.log('Received human detection:', responseData);
-    //     return response.text()
-    // })
-    // .then(humanDetected => {
-    //     if (humanDetected === "true") { // human detected, stop
-    //         sendCommand('stop')
-    //         .then(responseData => {
-    //             console.log('Received response data:', responseData);
-    //         })
-    //         .catch(error => {
-    //             console.error('Error:', error);
-    //         });
-    //     } else {
-    //         sendCommand('forward')
-    //         .then(responseData => {
-    //             console.log('Received response data:', responseData);
-    //             // display a popup if the robot is going backward instead of forward due to IMU angle being too large
-    //             if (responseData['executed action'] === 'backward'){
-    //                 showPopup("Angle larger than safety threshold.")
-    //             }
-    //         })
-    //         .catch(error => {
-    //             console.error('Error:', error);
-    //         });
-    //     }
-    // })
-    // .catch(error => {
-    //     console.error('Error:', error);
-    // });
 }
 
 function stop() {
